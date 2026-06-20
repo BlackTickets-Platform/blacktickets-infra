@@ -6,3 +6,5 @@ crash.log
 *.pem
 .env
 credentials
+.build/
+terraform/.build/

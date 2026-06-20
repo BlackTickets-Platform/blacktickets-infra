@@ -1,1 +1,200 @@
-# TODO: Define CloudFront, Route53, and edge routing resources.
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+
+  common_tags = {
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_cloudfront_origin_access_control" "posters" {
+  name                              = "${local.name_prefix}-poster-oac"
+  description                       = "OAC for private event poster bucket."
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
+resource "aws_cloudfront_distribution" "posters" {
+  enabled             = true
+  comment             = "${local.name_prefix} poster images"
+  default_root_object = ""
+
+  origin {
+    domain_name              = var.poster_bucket_domain
+    origin_access_control_id = aws_cloudfront_origin_access_control.posters.id
+    origin_id                = "poster-s3-origin"
+  }
+
+  default_cache_behavior {
+    target_origin_id       = "poster-s3-origin"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+    compress               = true
+
+    forwarded_values {
+      query_string = false
+
+      cookies {
+        forward = "none"
+      }
+    }
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-poster-cdn"
+  })
+}
+
+data "aws_iam_policy_document" "poster_bucket_cloudfront_read" {
+  statement {
+    actions = ["s3:GetObject"]
+
+    resources = [
+      "${var.poster_bucket_arn}/event-posters/*"
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.posters.arn]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "posters" {
+  bucket = var.poster_bucket_id
+  policy = data.aws_iam_policy_document.poster_bucket_cloudfront_read.json
+}
+
+resource "aws_wafv2_web_acl" "regional" {
+  name        = "${local.name_prefix}-web-acl"
+  description = "Regional WAF Web ACL for BlackTickets ingress resources."
+  scope       = "REGIONAL"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWSManagedRulesCommonRuleSet"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+
+        rule_action_override {
+          name = "SizeRestrictions_BODY"
+
+          action_to_use {
+            count {}
+          }
+        }
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedRulesCommonRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWSManagedRulesSQLiRuleSet"
+    priority = 2
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesSQLiRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedRulesSQLiRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "RateLimit100"
+    priority = 3
+
+    action {
+      block {}
+    }
+
+    statement {
+      rate_based_statement {
+        limit              = 100
+        aggregate_key_type = "IP"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "RateLimit100"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${local.name_prefix}-web-acl"
+    sampled_requests_enabled   = true
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-web-acl"
+  })
+}
+
+data "aws_route53_zone" "selected" {
+  count = var.create_route53_record && var.domain_name != null ? 1 : 0
+
+  name         = var.domain_name
+  private_zone = false
+}
+
+resource "aws_route53_record" "posters" {
+  count = var.create_route53_record && var.domain_name != null ? 1 : 0
+
+  zone_id = data.aws_route53_zone.selected[0].zone_id
+  name    = "posters.${var.domain_name}"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.posters.domain_name
+    zone_id                = aws_cloudfront_distribution.posters.hosted_zone_id
+    evaluate_target_health = false
+  }
+}

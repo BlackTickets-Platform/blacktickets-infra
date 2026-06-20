@@ -1,1 +1,9 @@
-# TODO: Add ECR outputs.
+output "repository_urls" {
+  description = "ECR repository URLs keyed by service name."
+  value       = { for name, repo in aws_ecr_repository.service : name => repo.repository_url }
+}
+
+output "repository_arns" {
+  description = "ECR repository ARNs keyed by service name."
+  value       = { for name, repo in aws_ecr_repository.service : name => repo.arn }
+}
