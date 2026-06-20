@@ -2,6 +2,7 @@
 *.tfstate
 *.tfstate.*
 terraform.tfvars
+*.tfvars
 crash.log
 *.pem
 .env
