@@ -8,6 +8,16 @@ variable "environment" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region that contains the application secrets."
+  type        = string
+}
+
+variable "account_id" {
+  description = "AWS account ID that contains the application secrets."
+  type        = string
+}
+
 variable "oidc_provider_arn" {
   description = "ARN of the EKS IAM OIDC provider."
   type        = string

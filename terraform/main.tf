@@ -27,11 +27,12 @@ module "networking" {
 module "security" {
   source = "./modules/security"
 
-  project_name          = var.project_name
-  environment           = var.environment
-  vpc_id                = module.networking.vpc_id
-  eks_api_ingress_cidrs = var.eks_api_ingress_cidrs
-  rds_port              = var.rds_port
+  project_name             = var.project_name
+  environment              = var.environment
+  vpc_id                   = module.networking.vpc_id
+  eks_api_ingress_cidrs    = var.eks_api_ingress_cidrs
+  private_app_subnet_cidrs = var.private_app_subnet_cidrs
+  rds_port                 = var.rds_port
 }
 
 module "ecr" {
@@ -79,6 +80,8 @@ module "irsa" {
 
   project_name                    = var.project_name
   environment                     = var.environment
+  aws_region                      = var.aws_region
+  account_id                      = data.aws_caller_identity.current.account_id
   oidc_provider_arn               = module.eks.oidc_provider_arn
   oidc_provider_url               = module.eks.oidc_provider_url
   namespace                       = "${var.project_name}-${var.environment}"

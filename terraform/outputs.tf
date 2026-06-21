@@ -32,3 +32,13 @@ output "irsa_role_arns" {
   description = "IRSA role ARNs keyed by service account."
   value       = module.irsa.role_arns
 }
+
+output "alb_controller_role_arn" {
+  description = "IAM role ARN for the AWS Load Balancer Controller service account."
+  value       = module.irsa.alb_controller_role_arn
+}
+
+output "external_secrets_role_arn" {
+  description = "IAM role ARN for the External Secrets Operator service account."
+  value       = module.irsa.external_secrets_role_arn
+}

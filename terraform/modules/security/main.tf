@@ -47,6 +47,13 @@ resource "aws_security_group" "rds" {
     security_groups = [aws_security_group.eks_cluster.id]
   }
 
+  ingress {
+    from_port   = var.rds_port
+    to_port     = var.rds_port
+    protocol    = "tcp"
+    cidr_blocks = var.private_app_subnet_cidrs
+  }
+
   egress {
     description = "Outbound database traffic"
     from_port   = 0

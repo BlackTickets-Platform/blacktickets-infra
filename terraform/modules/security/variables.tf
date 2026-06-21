@@ -18,6 +18,11 @@ variable "eks_api_ingress_cidrs" {
   type        = list(string)
 }
 
+variable "private_app_subnet_cidrs" {
+  description = "CIDR blocks for private EKS/application subnets allowed to reach RDS."
+  type        = list(string)
+}
+
 variable "rds_port" {
   description = "Database port allowed from EKS workloads to RDS."
   type        = number
