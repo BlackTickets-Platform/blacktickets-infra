@@ -49,6 +49,11 @@ resource "aws_eks_cluster" "main" {
     endpoint_public_access  = true
   }
 
+  access_config {
+    authentication_mode                         = "API_AND_CONFIG_MAP"
+    bootstrap_cluster_creator_admin_permissions = true
+  }
+
   enabled_cluster_log_types = [
     "api",
     "audit",
@@ -74,6 +79,10 @@ resource "aws_iam_openid_connect_provider" "cluster" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-oidc-provider"
   })
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 data "aws_iam_policy_document" "node_assume_role" {
@@ -137,4 +146,32 @@ resource "aws_eks_node_group" "default" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-default-node-group"
   })
+}
+
+resource "aws_eks_access_entry" "github_terraform" {
+  count = var.github_terraform_role_arn == null ? 0 : 1
+
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = var.github_terraform_role_arn
+  type          = "STANDARD"
+
+  depends_on = [
+    aws_eks_cluster.main
+  ]
+}
+
+resource "aws_eks_access_policy_association" "github_terraform_cluster_admin" {
+  count = var.github_terraform_role_arn == null ? 0 : 1
+
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = var.github_terraform_role_arn
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [
+    aws_eks_access_entry.github_terraform
+  ]
 }

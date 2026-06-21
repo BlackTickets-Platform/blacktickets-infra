@@ -1,5 +1,9 @@
 data "aws_caller_identity" "current" {}
 
+data "aws_eks_cluster" "main" {
+  name = module.eks.cluster_name
+}
+
 data "aws_eks_cluster_auth" "main" {
   name = module.eks.cluster_name
 }
@@ -85,6 +89,7 @@ module "eks" {
   node_desired_size         = var.eks_node_desired_size
   node_min_size             = var.eks_node_min_size
   node_max_size             = var.eks_node_max_size
+  github_terraform_role_arn = module.github_oidc.role_arn
 }
 
 module "irsa" {

@@ -92,6 +92,11 @@ variable "db_password" {
   description = "PostgreSQL master password."
   type        = string
   sensitive   = true
+
+  validation {
+    condition     = length(var.db_password) > 0
+    error_message = "db_password must be provided from a secret source such as GitHub Secrets DB_PASSWORD."
+  }
 }
 
 variable "db_instance_class" {

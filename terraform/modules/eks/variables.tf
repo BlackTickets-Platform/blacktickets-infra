@@ -47,3 +47,9 @@ variable "node_max_size" {
   description = "Maximum node count."
   type        = number
 }
+
+variable "github_terraform_role_arn" {
+  description = "Optional GitHub Actions Terraform role ARN to grant EKS cluster admin access."
+  type        = string
+  default     = null
+}
