@@ -1,5 +1,9 @@
 data "aws_caller_identity" "current" {}
 
+data "aws_eks_cluster_auth" "main" {
+  name = module.eks.cluster_name
+}
+
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
 
@@ -96,6 +100,22 @@ module "irsa" {
   poster_bucket_arn               = module.data.poster_bucket_arn
   booking_notifications_queue_arn = module.data.booking_notifications_queue_arn
   bedrock_model_arn               = "arn:aws:bedrock:${var.aws_region}::foundation-model/amazon.nova-micro-v1:0"
+}
+
+module "argocd" {
+  source = "./modules/argocd"
+
+  cluster_name             = module.eks.cluster_name
+  eks_cluster_endpoint     = module.eks.cluster_endpoint
+  eks_cluster_ca_cert      = module.eks.cluster_certificate_authority_data
+  eks_cluster_token        = data.aws_eks_cluster_auth.main.token
+  applications_repo_url    = "https://github.com/BlackTickets-Platform/blacktickets-helm.git"
+  applications_path        = "charts/blacktickets"
+  applications_values_file = "values-dev.yaml"
+
+  depends_on = [
+    module.eks
+  ]
 }
 
 module "edge" {

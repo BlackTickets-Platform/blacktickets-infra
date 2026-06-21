@@ -133,3 +133,21 @@ variable "create_route53_record" {
   type        = bool
   default     = false
 }
+
+variable "cluster_name" {
+  description = "EKS cluster name."
+  type        = string
+  default     = "blacktickets-dev"
+}
+
+variable "subnet_ids" {
+  description = "Subnet IDs for EKS node group (private-app subnets)."
+  type        = list(string)
+  default     = ["subnet-0ad6c3c579c0cef95", "subnet-051c4066c8371e280"]
+}
+
+variable "db_host" {
+  description = "RDS endpoint hostname."
+  type        = string
+  default     = "blacktickets-dev-postgres.cqpkso2i290v.us-east-1.rds.amazonaws.com"
+}

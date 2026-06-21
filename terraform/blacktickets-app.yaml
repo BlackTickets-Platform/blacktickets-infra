@@ -1,0 +1,23 @@
+﻿apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: blacktickets
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/BlackTickets-Platform/blacktickets-helm.git
+    targetRevision: main
+    path: charts/blacktickets
+    helm:
+      valueFiles:
+        - values-dev.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: blacktickets-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

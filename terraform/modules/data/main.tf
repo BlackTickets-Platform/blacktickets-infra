@@ -37,6 +37,10 @@ resource "aws_db_instance" "postgres" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-postgres"
   })
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket" "posters" {
