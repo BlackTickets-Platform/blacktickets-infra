@@ -9,3 +9,4 @@ crash.log
 credentials
 .build/
 terraform/.build/
+state-backups/

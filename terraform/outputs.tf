@@ -57,3 +57,18 @@ output "github_actions_oidc_provider_arn" {
   description = "IAM OIDC provider ARN for GitHub Actions."
   value       = module.github_oidc.oidc_provider_arn
 }
+
+output "external_secrets_release_name" {
+  description = "Terraform-managed External Secrets Operator Helm release name."
+  value       = module.platform_addons.external_secrets_release_name
+}
+
+output "aws_load_balancer_controller_release_name" {
+  description = "Terraform-managed AWS Load Balancer Controller Helm release name."
+  value       = module.platform_addons.aws_load_balancer_controller_release_name
+}
+
+output "gateway_api_crds_manifest_url" {
+  description = "Gateway API CRDs manifest URL applied by Terraform."
+  value       = module.platform_addons.gateway_api_crds_manifest_url
+}

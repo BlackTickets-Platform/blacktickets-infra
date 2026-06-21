@@ -107,6 +107,21 @@ module "irsa" {
   bedrock_model_arn               = "arn:aws:bedrock:${var.aws_region}::foundation-model/amazon.nova-micro-v1:0"
 }
 
+module "platform_addons" {
+  source = "./modules/platform-addons"
+
+  cluster_name              = module.eks.cluster_name
+  aws_region                = var.aws_region
+  vpc_id                    = module.networking.vpc_id
+  external_secrets_role_arn = module.irsa.external_secrets_role_arn
+  alb_controller_role_arn   = module.irsa.alb_controller_role_arn
+
+  depends_on = [
+    module.eks,
+    module.irsa
+  ]
+}
+
 module "argocd" {
   source = "./modules/argocd"
 
@@ -119,7 +134,8 @@ module "argocd" {
   applications_values_file = "values-dev.yaml"
 
   depends_on = [
-    module.eks
+    module.eks,
+    module.platform_addons
   ]
 }
 
