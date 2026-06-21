@@ -12,6 +12,14 @@ locals {
   ]
 }
 
+module "github_oidc" {
+  source = "./modules/oidc"
+
+  github_org  = "BlackTickets-Platform"
+  github_repo = "blacktickets-infra"
+  role_name   = "blacktickets-dev-github-terraform-deploy"
+}
+
 module "networking" {
   source = "./modules/networking"
 

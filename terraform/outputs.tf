@@ -42,3 +42,18 @@ output "external_secrets_role_arn" {
   description = "IAM role ARN for the External Secrets Operator service account."
   value       = module.irsa.external_secrets_role_arn
 }
+
+output "github_actions_deploy_role_arn" {
+  description = "IAM role ARN GitHub Actions can assume through OIDC for Terraform deployments."
+  value       = module.github_oidc.role_arn
+}
+
+output "role_arn" {
+  description = "IAM role ARN GitHub Actions can assume through OIDC for Terraform deployments."
+  value       = module.github_oidc.role_arn
+}
+
+output "github_actions_oidc_provider_arn" {
+  description = "IAM OIDC provider ARN for GitHub Actions."
+  value       = module.github_oidc.oidc_provider_arn
+}
