@@ -138,13 +138,16 @@ module "argocd" {
 module "edge" {
   source = "./modules/edge"
 
-  project_name          = var.project_name
-  environment           = var.environment
-  poster_bucket_id      = module.data.poster_bucket_name
-  poster_bucket_arn     = module.data.poster_bucket_arn
-  poster_bucket_domain  = module.data.poster_bucket_regional_domain_name
-  domain_name           = var.domain_name
-  create_route53_record = var.create_route53_record
+  project_name               = var.project_name
+  environment                = var.environment
+  poster_bucket_id           = module.data.poster_bucket_name
+  poster_bucket_arn          = module.data.poster_bucket_arn
+  poster_bucket_domain       = module.data.poster_bucket_regional_domain_name
+  domain_name                = var.domain_name
+  app_domain_name            = var.app_domain_name
+  app_load_balancer_dns_name = var.app_load_balancer_dns_name
+  create_route53_zone        = var.create_route53_zone
+  create_route53_record      = var.create_route53_record
 }
 
 module "observability" {

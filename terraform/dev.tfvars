@@ -28,7 +28,10 @@ db_allocated_storage = 20
 rds_port             = 5432
 db_host              = "blacktickets-dev-postgres.cqpkso2i290v.us-east-1.rds.amazonaws.com"
 
-poster_bucket_name    = "blacktickets-dev-posters"
-notification_email    = "ananthakkumarv@gmail.com"
-domain_name           = "ananthapps.site"
-create_route53_record = false
+poster_bucket_name         = "blacktickets-dev-posters"
+notification_email         = "ananthakkumarv@gmail.com"
+domain_name                = "ananthapps.site"
+app_domain_name            = "blacktickets.ananthapps.site"
+app_load_balancer_dns_name = "k8s-blacktic-blacktic-af4e39c871-1886668477.us-east-1.elb.amazonaws.com"
+create_route53_zone        = true
+create_route53_record      = true

@@ -133,6 +133,24 @@ variable "domain_name" {
   default     = null
 }
 
+variable "app_domain_name" {
+  description = "Optional public DNS name for the BlackTickets web application."
+  type        = string
+  default     = null
+}
+
+variable "app_load_balancer_dns_name" {
+  description = "Optional public ALB DNS name for the BlackTickets Gateway."
+  type        = string
+  default     = null
+}
+
+variable "create_route53_zone" {
+  description = "Whether to create the public Route53 hosted zone for domain_name."
+  type        = bool
+  default     = false
+}
+
 variable "create_route53_record" {
   description = "Whether to create Route53 records for the CloudFront distribution."
   type        = bool

@@ -77,3 +77,28 @@ output "aws_load_balancer_controller_gateway_crds_manifest_url" {
   description = "AWS Load Balancer Controller Gateway API CRDs manifest URL applied by Terraform."
   value       = module.platform_addons.aws_load_balancer_controller_gateway_crds_manifest_url
 }
+
+output "route53_zone_id" {
+  description = "Route53 public hosted zone ID for the root domain."
+  value       = module.edge.route53_zone_id
+}
+
+output "route53_name_servers" {
+  description = "Route53 public hosted zone name servers to configure at the domain registrar."
+  value       = module.edge.route53_name_servers
+}
+
+output "app_domain_name" {
+  description = "Public DNS name for the BlackTickets web application."
+  value       = module.edge.app_domain_name
+}
+
+output "app_dns_record_fqdn" {
+  description = "Route53 DNS record FQDN for the BlackTickets web application."
+  value       = module.edge.app_dns_record_fqdn
+}
+
+output "app_acm_certificate_arn" {
+  description = "ACM certificate ARN for the BlackTickets web application."
+  value       = module.edge.app_acm_certificate_arn
+}

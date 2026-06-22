@@ -6,6 +6,9 @@ locals {
     Environment = var.environment
     ManagedBy   = "terraform"
   }
+
+  use_route53_zone = var.domain_name != null && (var.create_route53_zone || var.create_route53_record || var.app_domain_name != null)
+  route53_zone_id  = var.domain_name == null ? null : var.create_route53_zone ? aws_route53_zone.public[0].zone_id : data.aws_route53_zone.selected[0].zone_id
 }
 
 resource "aws_cloudfront_origin_access_control" "posters" {
@@ -178,17 +181,69 @@ resource "aws_wafv2_web_acl" "regional" {
   })
 }
 
+resource "aws_route53_zone" "public" {
+  count = var.create_route53_zone && var.domain_name != null ? 1 : 0
+
+  name = var.domain_name
+
+  tags = merge(local.common_tags, {
+    Name = var.domain_name
+  })
+}
+
 data "aws_route53_zone" "selected" {
-  count = var.create_route53_record && var.domain_name != null ? 1 : 0
+  count = local.use_route53_zone && !var.create_route53_zone ? 1 : 0
 
   name         = var.domain_name
   private_zone = false
 }
 
+resource "aws_acm_certificate" "app" {
+  count = var.app_domain_name != null ? 1 : 0
+
+  domain_name       = var.app_domain_name
+  validation_method = "DNS"
+
+  tags = merge(local.common_tags, {
+    Name = var.app_domain_name
+  })
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_route53_record" "app_certificate_validation" {
+  for_each = var.app_domain_name == null ? {} : {
+    for option in aws_acm_certificate.app[0].domain_validation_options : option.domain_name => {
+      name   = option.resource_record_name
+      record = option.resource_record_value
+      type   = option.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = local.route53_zone_id
+}
+
+resource "aws_route53_record" "app" {
+  count = var.app_domain_name != null && var.app_load_balancer_dns_name != null ? 1 : 0
+
+  zone_id = local.route53_zone_id
+  name    = var.app_domain_name
+  type    = "CNAME"
+  ttl     = 60
+  records = [var.app_load_balancer_dns_name]
+}
+
 resource "aws_route53_record" "posters" {
   count = var.create_route53_record && var.domain_name != null ? 1 : 0
 
-  zone_id = data.aws_route53_zone.selected[0].zone_id
+  zone_id = local.route53_zone_id
   name    = "posters.${var.domain_name}"
   type    = "A"
 
