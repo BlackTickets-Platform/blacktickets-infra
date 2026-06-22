@@ -25,6 +25,61 @@ resource "kubernetes_namespace" "external_secrets" {
 
 locals {
   is_windows = dirname("/") == "\\"
+
+  gateway_api_crds_cmd_windows = <<-EOT
+    $ErrorActionPreference = "Stop"
+    kubectl apply -f "${var.gateway_api_crds_url}"
+    kubectl apply -f "${var.aws_load_balancer_controller_gateway_crds_url}"
+  EOT
+
+  gateway_api_crds_cmd_unix = <<-EOT
+    set -e
+    kubectl apply -f "${var.gateway_api_crds_url}"
+    kubectl apply -f "${var.aws_load_balancer_controller_gateway_crds_url}"
+  EOT
+
+  gateway_api_crds_cmd = local.is_windows ? local.gateway_api_crds_cmd_windows : local.gateway_api_crds_cmd_unix
+
+  wait_for_lbc_webhook_cmd_windows = <<-EOT
+    $ErrorActionPreference = "Stop"
+
+    kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
+
+    for ($i = 1; $i -le 60; $i++) {
+      $endpoint = kubectl get endpoints aws-load-balancer-webhook-service -n kube-system -o jsonpath="{.subsets[0].addresses[0].ip}" 2>$null
+      if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($endpoint)) {
+        Write-Host "AWS Load Balancer Controller webhook endpoint is ready: $endpoint"
+        exit 0
+      }
+
+      Write-Host "Waiting for AWS Load Balancer Controller webhook endpoint... ($i/60)"
+      Start-Sleep -Seconds 5
+    }
+
+    throw "Timed out waiting for aws-load-balancer-webhook-service endpoints."
+  EOT
+
+  wait_for_lbc_webhook_cmd_unix = <<-EOT
+    set -e
+
+    kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
+
+    for i in $(seq 1 60); do
+      endpoint=$(kubectl get endpoints aws-load-balancer-webhook-service -n kube-system -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true)
+      if [ -n "$endpoint" ]; then
+        echo "AWS Load Balancer Controller webhook endpoint is ready: $endpoint"
+        exit 0
+      fi
+
+      echo "Waiting for AWS Load Balancer Controller webhook endpoint... ($i/60)"
+      sleep 5
+    done
+
+    echo "Timed out waiting for aws-load-balancer-webhook-service endpoints."
+    exit 1
+  EOT
+
+  wait_for_lbc_webhook_cmd = local.is_windows ? local.wait_for_lbc_webhook_cmd_windows : local.wait_for_lbc_webhook_cmd_unix
 }
 
 resource "null_resource" "gateway_api_crds" {
@@ -35,15 +90,7 @@ resource "null_resource" "gateway_api_crds" {
 
   provisioner "local-exec" {
     interpreter = local.is_windows ? ["PowerShell", "-NoProfile", "-Command"] : ["/bin/sh", "-c"]
-    command     = local.is_windows ? <<-EOT
-      $ErrorActionPreference = "Stop"
-      kubectl apply -f "${var.gateway_api_crds_url}"
-      kubectl apply -f "${var.aws_load_balancer_controller_gateway_crds_url}"
-    EOT : <<-EOT
-      set -e
-      kubectl apply -f "${var.gateway_api_crds_url}"
-      kubectl apply -f "${var.aws_load_balancer_controller_gateway_crds_url}"
-    EOT
+    command     = local.gateway_api_crds_cmd
   }
 }
 
@@ -119,41 +166,6 @@ resource "null_resource" "wait_for_aws_load_balancer_webhook" {
 
   provisioner "local-exec" {
     interpreter = local.is_windows ? ["PowerShell", "-NoProfile", "-Command"] : ["/bin/sh", "-c"]
-    command     = local.is_windows ? <<-EOT
-      $ErrorActionPreference = "Stop"
-
-      kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
-
-      for ($i = 1; $i -le 60; $i++) {
-        $endpoint = kubectl get endpoints aws-load-balancer-webhook-service -n kube-system -o jsonpath="{.subsets[0].addresses[0].ip}" 2>$null
-        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($endpoint)) {
-          Write-Host "AWS Load Balancer Controller webhook endpoint is ready: $endpoint"
-          exit 0
-        }
-
-        Write-Host "Waiting for AWS Load Balancer Controller webhook endpoint... ($i/60)"
-        Start-Sleep -Seconds 5
-      }
-
-      throw "Timed out waiting for aws-load-balancer-webhook-service endpoints."
-    EOT : <<-EOT
-      set -e
-
-      kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
-
-      for i in $(seq 1 60); do
-        endpoint=$(kubectl get endpoints aws-load-balancer-webhook-service -n kube-system -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null || true)
-        if [ -n "$endpoint" ]; then
-          echo "AWS Load Balancer Controller webhook endpoint is ready: $endpoint"
-          exit 0
-        fi
-
-        echo "Waiting for AWS Load Balancer Controller webhook endpoint... ($i/60)"
-        sleep 5
-      done
-
-      echo "Timed out waiting for aws-load-balancer-webhook-service endpoints."
-      exit 1
-    EOT
+    command     = local.wait_for_lbc_webhook_cmd
   }
 }
