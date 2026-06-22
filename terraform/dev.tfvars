@@ -33,4 +33,5 @@ app_domain_name       = "blacktickets.ananthapps.site"
 create_route53_zone   = true
 create_route53_record = true
 
-bedrock_assume_role_arn = "arn:aws:iam::091869721157:role/blacktickets-old-account-bedrock-access"
+bedrock_assume_role_arn   = "arn:aws:iam::091869721157:role/blacktickets-old-account-bedrock-access"
+app_load_balancer_dns_name = "k8s-blacktic-blacktic-3ca4ae07e3-958477236.us-east-1.elb.amazonaws.com"
