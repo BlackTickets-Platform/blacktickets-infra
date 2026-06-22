@@ -5,6 +5,7 @@ locals {
     Project     = var.project_name
     Environment = var.environment
     ManagedBy   = "terraform"
+    Owner       = "Anantha Kumar"
   }
 
   use_route53_zone = var.domain_name != null && (var.create_route53_zone || var.create_route53_record || var.app_domain_name != null)

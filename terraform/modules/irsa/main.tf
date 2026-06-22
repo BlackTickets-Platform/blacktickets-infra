@@ -19,6 +19,7 @@ locals {
     Project     = var.project_name
     Environment = var.environment
     ManagedBy   = "terraform"
+    Owner       = "Anantha Kumar"
   }
 }
 

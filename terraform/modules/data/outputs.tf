@@ -43,6 +43,16 @@ output "booking_notifications_sns_topic_arn" {
   value       = aws_sns_topic.booking_notifications.arn
 }
 
+output "app_config_secret_arn" {
+  description = "ARN of the Secrets Manager app config secret."
+  value       = aws_secretsmanager_secret.app_config.arn
+}
+
+output "app_config_secret_name" {
+  description = "Name of the Secrets Manager app config secret."
+  value       = aws_secretsmanager_secret.app_config.name
+}
+
 output "booking_notification_lambda_name" {
   description = "Name of the booking notification Lambda consumer."
   value       = aws_lambda_function.booking_notification_consumer.function_name

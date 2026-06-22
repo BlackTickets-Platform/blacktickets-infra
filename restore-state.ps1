@@ -1,3 +1,7 @@
+param(
+  [switch]$AutoApprove
+)
+
 $ErrorActionPreference = "Stop"
 
 $InfraRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -164,10 +168,12 @@ if (-not $versions -or $versions.Count -eq 0) {
   Write-Host "Size: $((Get-Item $candidate).Length)"
   Write-Host "MD5: $((Get-FileHash $candidate -Algorithm MD5).Hash.ToLower())"
 
-  $answer = Read-Host "Upload this local backup as the current remote Terraform state? Type yes to continue"
-  if ($answer -ne "yes") {
-    Write-Host "State restore skipped."
-    exit 0
+  if (-not $AutoApprove) {
+    $answer = Read-Host "Upload this local backup as the current remote Terraform state? Type yes to continue"
+    if ($answer -ne "yes") {
+      Write-Host "State restore skipped."
+      exit 0
+    }
   }
 
   Publish-StateFile -StatePath $candidate
@@ -200,10 +206,12 @@ Write-Host "VersionId: $($version.VersionId)"
 Write-Host "LastModified: $($version.LastModified)"
 Write-Host "Size: $($version.Size)"
 
-$answer = Read-Host "Restore this version as the current Terraform state? Type yes to continue"
-if ($answer -ne "yes") {
-  Write-Host "State restore skipped."
-  exit 0
+if (-not $AutoApprove) {
+  $answer = Read-Host "Restore this version as the current Terraform state? Type yes to continue"
+  if ($answer -ne "yes") {
+    Write-Host "State restore skipped."
+    exit 0
+  }
 }
 
 $restorePath = Join-Path $BackupDir ("restored-terraform-state-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".json")

@@ -58,6 +58,11 @@ output "github_actions_oidc_provider_arn" {
   value       = module.github_oidc.oidc_provider_arn
 }
 
+output "github_actions_services_ecr_push_role_arn" {
+  description = "IAM role ARN GitHub Actions can assume through OIDC for service image pushes."
+  value       = module.github_oidc.services_ecr_push_role_arn
+}
+
 output "external_secrets_release_name" {
   description = "Terraform-managed External Secrets Operator Helm release name."
   value       = module.platform_addons.external_secrets_release_name
@@ -101,4 +106,14 @@ output "app_dns_record_fqdn" {
 output "app_acm_certificate_arn" {
   description = "ACM certificate ARN for the BlackTickets web application."
   value       = module.edge.app_acm_certificate_arn
+}
+
+output "app_config_secret_arn" {
+  description = "ARN of the Secrets Manager app config secret."
+  value       = module.data.app_config_secret_arn
+}
+
+output "app_config_secret_name" {
+  description = "Name of the Secrets Manager app config secret."
+  value       = module.data.app_config_secret_name
 }

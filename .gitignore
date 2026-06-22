@@ -10,3 +10,7 @@ credentials
 .build/
 terraform/.build/
 state-backups/
+plan.txt
+terraform/plan-*.txt
+terraform/tfplan*
+bootstrap/*.tfplan

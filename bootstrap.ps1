@@ -1,3 +1,7 @@
+param(
+  [switch]$AutoApprove
+)
+
 $ErrorActionPreference = "Stop"
 
 $InfraRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -27,10 +31,12 @@ try {
     throw "Command failed with exit code ${LASTEXITCODE}: terraform plan -out bootstrap.tfplan -no-color"
   }
 
-  $answer = Read-Host "Apply bootstrap plan? Type yes to continue"
-  if ($answer -ne "yes") {
-    Write-Host "Bootstrap apply skipped."
-    exit 0
+  if (-not $AutoApprove) {
+    $answer = Read-Host "Apply bootstrap plan? Type yes to continue"
+    if ($answer -ne "yes") {
+      Write-Host "Bootstrap apply skipped."
+      exit 0
+    }
   }
 
   terraform apply bootstrap.tfplan

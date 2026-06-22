@@ -5,6 +5,7 @@ locals {
     Project     = var.project_name
     Environment = var.environment
     ManagedBy   = "terraform"
+    Owner       = "Anantha Kumar"
   }
 }
 
@@ -118,6 +119,15 @@ resource "aws_sns_topic_subscription" "booking_notifications_email" {
   topic_arn = aws_sns_topic.booking_notifications.arn
   protocol  = "email"
   endpoint  = var.notification_email
+}
+
+resource "aws_secretsmanager_secret" "app_config" {
+  name        = "${local.name_prefix}/app-config"
+  description = "Runtime configuration for BlackTickets application services."
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-app-config-secret"
+  })
 }
 
 data "archive_file" "booking_notification_consumer" {
