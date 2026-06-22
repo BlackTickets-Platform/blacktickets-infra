@@ -145,18 +145,21 @@ aws secretsmanager describe-secret --secret-id $secretNameVal --region $Region *
 $describeExit = $LASTEXITCODE
 $ErrorActionPreference = $previousErrorActionPreference
 
+# Escape double quotes for external executable argument passing in PowerShell
+$escapedJson = $json -replace '"', '\"'
+
 if ($describeExit -eq 0) {
   Write-Host "Updating existing secret value."
   aws secretsmanager put-secret-value `
     --secret-id $secretNameVal `
-    --secret-string $json `
+    --secret-string $escapedJson `
     --region $Region | Out-Null
 } else {
   Write-Host "Secret was missing. Creating it now."
   aws secretsmanager create-secret `
     --name $secretNameVal `
     --description "Runtime application configuration for BlackTickets." `
-    --secret-string $json `
+    --secret-string $escapedJson `
     --region $Region | Out-Null
 }
 

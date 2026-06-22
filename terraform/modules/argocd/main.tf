@@ -83,6 +83,25 @@ locals {
       "    helm:",
       "      valueFiles:",
       "        - ${var.applications_values_file}",
+      "      parameters:",
+      "        - name: image.registry",
+      "          value: `"${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com`"",
+      "        - name: config.awsAccountId",
+      "          value: `"${var.aws_account_id}`"",
+      "        - name: config.awsRegion",
+      "          value: `"${var.aws_region}`"",
+      "        - name: config.dbHost",
+      "          value: `"${var.db_host}`"",
+      "        - name: config.posterBucketName",
+      "          value: `"${var.poster_bucket_name}`"",
+      "        - name: config.posterCdnDomain",
+      "          value: `"${var.poster_cloudfront_domain}`"",
+      "        - name: config.bookingNotificationQueueUrl",
+      "          value: `"${var.booking_notification_queue_url}`"",
+      "        - name: gateway.hostname",
+      "          value: `"${var.app_domain_name}`"",
+      "        - name: gateway.certificateArn",
+      "          value: `"${var.acm_certificate_arn != null ? var.acm_certificate_arn : ""}`"",
       "  destination:",
       "    server: https://kubernetes.default.svc",
       "    namespace: ${var.applications_destination_namespace}",
@@ -131,6 +150,25 @@ locals {
         helm:
           valueFiles:
             - ${var.applications_values_file}
+          parameters:
+            - name: image.registry
+              value: "${var.aws_account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+            - name: config.awsAccountId
+              value: "${var.aws_account_id}"
+            - name: config.awsRegion
+              value: "${var.aws_region}"
+            - name: config.dbHost
+              value: "${var.db_host}"
+            - name: config.posterBucketName
+              value: "${var.poster_bucket_name}"
+            - name: config.posterCdnDomain
+              value: "${var.poster_cloudfront_domain}"
+            - name: config.bookingNotificationQueueUrl
+              value: "${var.booking_notification_queue_url}"
+            - name: gateway.hostname
+              value: "${var.app_domain_name}"
+            - name: gateway.certificateArn
+              value: "${var.acm_certificate_arn != null ? var.acm_certificate_arn : ""}"
       destination:
         server: https://kubernetes.default.svc
         namespace: ${var.applications_destination_namespace}
@@ -155,12 +193,20 @@ resource "null_resource" "argocd_application" {
 
   triggers = {
     app_manifest_hash = sha256(jsonencode({
-      repo             = var.applications_repo_url
-      target_revision  = var.applications_target_revision
-      path             = var.applications_path
-      values           = var.applications_values_file
-      namespace        = var.applications_destination_namespace
-      argocd_namespace = kubernetes_namespace.argocd.metadata[0].name
+      repo                           = var.applications_repo_url
+      target_revision                = var.applications_target_revision
+      path                           = var.applications_path
+      values                         = var.applications_values_file
+      namespace                      = var.applications_destination_namespace
+      argocd_namespace               = kubernetes_namespace.argocd.metadata[0].name
+      aws_account_id                 = var.aws_account_id
+      aws_region                     = var.aws_region
+      db_host                        = var.db_host
+      poster_bucket_name             = var.poster_bucket_name
+      poster_cloudfront_domain       = var.poster_cloudfront_domain
+      booking_notification_queue_url = var.booking_notification_queue_url
+      app_domain_name                = var.app_domain_name
+      acm_certificate_arn            = var.acm_certificate_arn
     }))
   }
 
@@ -169,3 +215,4 @@ resource "null_resource" "argocd_application" {
     command     = local.argocd_app_cmd
   }
 }
+

@@ -9,6 +9,42 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "aws_account_id" {
+  description = "AWS account ID."
+  type        = string
+}
+
+variable "db_host" {
+  description = "RDS database hostname."
+  type        = string
+}
+
+variable "poster_bucket_name" {
+  description = "S3 bucket for posters."
+  type        = string
+}
+
+variable "poster_cloudfront_domain" {
+  description = "CloudFront domain for posters."
+  type        = string
+}
+
+variable "booking_notification_queue_url" {
+  description = "SQS queue URL for booking notifications."
+  type        = string
+}
+
+variable "app_domain_name" {
+  description = "Web application public domain."
+  type        = string
+}
+
+variable "acm_certificate_arn" {
+  description = "ACM certificate ARN for the application load balancer."
+  type        = string
+  default     = null
+}
+
 variable "eks_cluster_endpoint" {
   description = "EKS cluster API endpoint."
   type        = string

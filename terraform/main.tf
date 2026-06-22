@@ -122,14 +122,21 @@ module "platform_addons" {
 module "argocd" {
   source = "./modules/argocd"
 
-  cluster_name             = module.eks.cluster_name
-  aws_region               = var.aws_region
-  eks_cluster_endpoint     = module.eks.cluster_endpoint
-  eks_cluster_ca_cert      = module.eks.cluster_certificate_authority_data
-  eks_cluster_token        = data.aws_eks_cluster_auth.main.token
-  applications_repo_url    = "https://github.com/BlackTickets-Platform/blacktickets-helm.git"
-  applications_path        = "charts/blacktickets"
-  applications_values_file = "values-dev.yaml"
+  cluster_name                   = module.eks.cluster_name
+  aws_region                     = var.aws_region
+  aws_account_id                 = data.aws_caller_identity.current.account_id
+  db_host                        = module.data.rds_endpoint
+  poster_bucket_name             = module.data.poster_bucket_name
+  poster_cloudfront_domain       = module.edge.poster_cloudfront_domain_name
+  booking_notification_queue_url = module.data.booking_notifications_queue_url
+  app_domain_name                = module.edge.app_domain_name
+  acm_certificate_arn            = module.edge.app_acm_certificate_arn
+  eks_cluster_endpoint           = module.eks.cluster_endpoint
+  eks_cluster_ca_cert            = module.eks.cluster_certificate_authority_data
+  eks_cluster_token              = data.aws_eks_cluster_auth.main.token
+  applications_repo_url          = "https://github.com/BlackTickets-Platform/blacktickets-helm.git"
+  applications_path              = "charts/blacktickets"
+  applications_values_file       = "values-dev.yaml"
 
   depends_on = [
     module.eks,
