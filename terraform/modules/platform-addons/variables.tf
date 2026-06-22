@@ -32,11 +32,17 @@ variable "external_secrets_chart_version" {
 variable "aws_load_balancer_controller_chart_version" {
   description = "AWS Load Balancer Controller Helm chart version."
   type        = string
-  default     = "1.8.2"
+  default     = "1.14.0"
 }
 
 variable "gateway_api_crds_url" {
   description = "Gateway API standard CRDs manifest URL."
   type        = string
-  default     = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml"
+  default     = "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.0/standard-install.yaml"
+}
+
+variable "aws_load_balancer_controller_gateway_crds_url" {
+  description = "AWS Load Balancer Controller Gateway API CRDs manifest URL."
+  type        = string
+  default     = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/refs/heads/main/config/crd/gateway/gateway-crds.yaml"
 }

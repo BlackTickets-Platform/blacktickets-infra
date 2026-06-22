@@ -25,7 +25,8 @@ resource "kubernetes_namespace" "external_secrets" {
 
 resource "null_resource" "gateway_api_crds" {
   triggers = {
-    manifest_url = var.gateway_api_crds_url
+    gateway_api_manifest_url = var.gateway_api_crds_url
+    aws_lbc_manifest_url     = var.aws_load_balancer_controller_gateway_crds_url
   }
 
   provisioner "local-exec" {
@@ -33,6 +34,7 @@ resource "null_resource" "gateway_api_crds" {
     command     = <<-EOT
       $ErrorActionPreference = "Stop"
       kubectl apply -f "${var.gateway_api_crds_url}"
+      kubectl apply -f "${var.aws_load_balancer_controller_gateway_crds_url}"
     EOT
   }
 }
@@ -43,6 +45,7 @@ resource "helm_release" "external_secrets" {
   repository = "https://charts.external-secrets.io"
   chart      = "external-secrets"
   version    = var.external_secrets_chart_version
+  wait       = false
 
   values = [
     yamlencode({
@@ -56,6 +59,10 @@ resource "helm_release" "external_secrets" {
         }
       }
     })
+  ]
+
+  depends_on = [
+    null_resource.wait_for_aws_load_balancer_webhook
   ]
 }
 
@@ -85,4 +92,36 @@ resource "helm_release" "aws_load_balancer_controller" {
   depends_on = [
     null_resource.gateway_api_crds
   ]
+}
+
+resource "null_resource" "wait_for_aws_load_balancer_webhook" {
+  depends_on = [
+    helm_release.aws_load_balancer_controller
+  ]
+
+  triggers = {
+    release = helm_release.aws_load_balancer_controller.metadata[0].revision
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["PowerShell", "-NoProfile", "-Command"]
+    command     = <<-EOT
+      $ErrorActionPreference = "Stop"
+
+      kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
+
+      for ($i = 1; $i -le 60; $i++) {
+        $endpoint = kubectl get endpoints aws-load-balancer-webhook-service -n kube-system -o jsonpath="{.subsets[0].addresses[0].ip}" 2>$null
+        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($endpoint)) {
+          Write-Host "AWS Load Balancer Controller webhook endpoint is ready: $endpoint"
+          exit 0
+        }
+
+        Write-Host "Waiting for AWS Load Balancer Controller webhook endpoint... ($i/60)"
+        Start-Sleep -Seconds 5
+      }
+
+      throw "Timed out waiting for aws-load-balancer-webhook-service endpoints."
+    EOT
+  }
 }

@@ -154,10 +154,6 @@ resource "aws_iam_role" "service_account" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-${each.key}-irsa"
   })
-
-  lifecycle {
-    ignore_changes = [assume_role_policy]
-  }
 }
 
 resource "aws_iam_role_policy" "service_account" {
@@ -185,10 +181,6 @@ resource "aws_iam_role" "aws_load_balancer_controller" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-aws-load-balancer-controller-irsa"
   })
-
-  lifecycle {
-    ignore_changes = [assume_role_policy]
-  }
 }
 
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
@@ -203,10 +195,6 @@ resource "aws_iam_role" "external_secrets" {
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-external-secrets-irsa"
   })
-
-  lifecycle {
-    ignore_changes = [assume_role_policy]
-  }
 }
 
 resource "aws_iam_role_policy" "external_secrets" {

@@ -72,3 +72,8 @@ output "gateway_api_crds_manifest_url" {
   description = "Gateway API CRDs manifest URL applied by Terraform."
   value       = module.platform_addons.gateway_api_crds_manifest_url
 }
+
+output "aws_load_balancer_controller_gateway_crds_manifest_url" {
+  description = "AWS Load Balancer Controller Gateway API CRDs manifest URL applied by Terraform."
+  value       = module.platform_addons.aws_load_balancer_controller_gateway_crds_manifest_url
+}

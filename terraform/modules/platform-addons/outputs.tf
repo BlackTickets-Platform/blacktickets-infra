@@ -15,5 +15,10 @@ output "aws_load_balancer_controller_release_name" {
 
 output "gateway_api_crds_manifest_url" {
   description = "Gateway API CRDs manifest URL applied by Terraform."
-  value       = null_resource.gateway_api_crds.triggers.manifest_url
+  value       = null_resource.gateway_api_crds.triggers.gateway_api_manifest_url
+}
+
+output "aws_load_balancer_controller_gateway_crds_manifest_url" {
+  description = "AWS Load Balancer Controller Gateway API CRDs manifest URL applied by Terraform."
+  value       = null_resource.gateway_api_crds.triggers.aws_lbc_manifest_url
 }
