@@ -50,6 +50,8 @@ function Get-TerraformOutput {
   )
 
   Push-Location $TerraformDir
+  $previousErrorAction = $ErrorActionPreference
+  $ErrorActionPreference = "SilentlyContinue"
   try {
     $value = terraform output -raw $Name 2>$null
     if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($value)) {
@@ -57,6 +59,7 @@ function Get-TerraformOutput {
     }
   }
   finally {
+    $ErrorActionPreference = $previousErrorAction
     Pop-Location
   }
 
