@@ -29,11 +29,33 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "Running Terraform init..."
-terraform -chdir=terraform init -backend-config=dev.hcl
+Push-Location (Join-Path $InfraRoot "terraform")
+try {
+  terraform init -backend-config dev.hcl
+  if ($LASTEXITCODE -ne 0) {
+    throw "Command failed with exit code ${LASTEXITCODE}: terraform init -backend-config dev.hcl"
+  }
+}
+finally {
+  Pop-Location
+}
 
 Write-Host "Running Terraform plan..."
-terraform -chdir=terraform plan -var-file dev.tfvars -out tfplan-recover -no-color
-terraform -chdir=terraform show -no-color tfplan-recover > terraform\plan-recover.txt
+Push-Location (Join-Path $InfraRoot "terraform")
+try {
+  terraform plan -var-file dev.tfvars -out tfplan-recover -no-color
+  if ($LASTEXITCODE -ne 0) {
+    throw "Command failed with exit code ${LASTEXITCODE}: terraform plan -var-file dev.tfvars -out tfplan-recover -no-color"
+  }
+
+  terraform show -no-color tfplan-recover > plan-recover.txt
+  if ($LASTEXITCODE -ne 0) {
+    throw "Command failed with exit code ${LASTEXITCODE}: terraform show -no-color tfplan-recover"
+  }
+}
+finally {
+  Pop-Location
+}
 
 $summary = Select-String -Path terraform\plan-recover.txt -Pattern "^Plan:" | Select-Object -First 1
 $danger = Select-String -Path terraform\plan-recover.txt -Pattern "will be destroyed|must be replaced"
@@ -52,7 +74,16 @@ if ($danger) {
 
 if ($summary -and $summary.Line -notmatch "0 to add, 0 to change, 0 to destroy") {
   Write-Host "Applying safe Terraform plan..."
-  terraform -chdir=terraform apply tfplan-recover
+  Push-Location (Join-Path $InfraRoot "terraform")
+  try {
+    terraform apply tfplan-recover
+    if ($LASTEXITCODE -ne 0) {
+      throw "Command failed with exit code ${LASTEXITCODE}: terraform apply tfplan-recover"
+    }
+  }
+  finally {
+    Pop-Location
+  }
 } else {
   Write-Host "No Terraform changes to apply."
 }

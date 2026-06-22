@@ -79,6 +79,12 @@ resource "helm_release" "aws_load_balancer_controller" {
       region      = var.aws_region
       vpcId       = var.vpc_id
 
+      controllerConfig = {
+        featureGates = {
+          ALBGatewayAPI = true
+        }
+      }
+
       serviceAccount = {
         create = true
         name   = "aws-load-balancer-controller"
