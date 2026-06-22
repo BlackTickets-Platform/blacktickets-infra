@@ -123,6 +123,7 @@ module "argocd" {
   source = "./modules/argocd"
 
   cluster_name             = module.eks.cluster_name
+  aws_region               = var.aws_region
   eks_cluster_endpoint     = module.eks.cluster_endpoint
   eks_cluster_ca_cert      = module.eks.cluster_certificate_authority_data
   eks_cluster_token        = data.aws_eks_cluster_auth.main.token

@@ -3,6 +3,12 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region."
+  type        = string
+  default     = "us-east-1"
+}
+
 variable "eks_cluster_endpoint" {
   description = "EKS cluster API endpoint."
   type        = string

@@ -28,12 +28,14 @@ locals {
 
   gateway_api_crds_cmd_windows = <<-EOT
     $ErrorActionPreference = "Stop"
+    aws eks update-kubeconfig --region "${var.aws_region}" --name "${var.cluster_name}"
     kubectl apply -f "${var.gateway_api_crds_url}"
     kubectl apply -f "${var.aws_load_balancer_controller_gateway_crds_url}"
   EOT
 
   gateway_api_crds_cmd_unix = <<-EOT
     set -e
+    aws eks update-kubeconfig --region "${var.aws_region}" --name "${var.cluster_name}"
     kubectl apply -f "${var.gateway_api_crds_url}"
     kubectl apply -f "${var.aws_load_balancer_controller_gateway_crds_url}"
   EOT
@@ -42,6 +44,7 @@ locals {
 
   wait_for_lbc_webhook_cmd_windows = <<-EOT
     $ErrorActionPreference = "Stop"
+    aws eks update-kubeconfig --region "${var.aws_region}" --name "${var.cluster_name}"
 
     kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
 
@@ -61,6 +64,7 @@ locals {
 
   wait_for_lbc_webhook_cmd_unix = <<-EOT
     set -e
+    aws eks update-kubeconfig --region "${var.aws_region}" --name "${var.cluster_name}"
 
     kubectl rollout status deployment/aws-load-balancer-controller -n kube-system --timeout=180s
 

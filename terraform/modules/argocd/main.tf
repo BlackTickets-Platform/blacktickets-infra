@@ -53,6 +53,7 @@ locals {
 
   argocd_app_cmd_windows = <<-EOT
     $ErrorActionPreference = "Stop"
+    aws eks update-kubeconfig --region "${var.aws_region}" --name "${var.cluster_name}"
     Write-Host "Waiting for ArgoCD Application CRD..."
     for ($i = 1; $i -le 30; $i++) {
       kubectl get crd applications.argoproj.io *> $null
@@ -100,6 +101,7 @@ locals {
 
   argocd_app_cmd_unix = <<-EOT
     set -e
+    aws eks update-kubeconfig --region "${var.aws_region}" --name "${var.cluster_name}"
     echo "Waiting for ArgoCD Application CRD..."
     for i in $(seq 1 30); do
       if kubectl get crd applications.argoproj.io >/dev/null 2>&1; then
