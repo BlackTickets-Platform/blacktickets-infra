@@ -1,11 +1,14 @@
 param(
   [string]$Region = "us-east-1",
-  [string]$SecretName = "blacktickets-dev/app-config",
+  [string]$SecretName = "",
+  [string]$DbHost = "",
+  [string]$QueueUrl = "",
   [string]$DbName = "blacktickets",
   [string]$DbUser = "postgres",
   [string]$DbPort = "5432",
   [string]$AdminEmail = "admin@blacktickets.com",
-  [string]$UserEmail = "user@blacktickets.com"
+  [string]$UserEmail = "user@blacktickets.com",
+  [string]$VarsFile = "dev.tfvars"
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,22 +65,50 @@ function Get-TerraformOutput {
 
 Write-Host "Preparing app config secret payload without printing secret values..."
 
-$dbHost = Get-TerraformOutput -Name "rds_endpoint"
-if ([string]::IsNullOrWhiteSpace($dbHost)) {
-  $dbHost = Read-Host "RDS endpoint hostname"
+# Parse variables from VarsFile to dynamically derive project and environment names
+$projectName = "blacktickets"
+$environment = "dev"
+$resolvedVarsFile = Join-Path $TerraformDir $VarsFile
+if (Test-Path $resolvedVarsFile) {
+  $vars = Get-Content $resolvedVarsFile
+  foreach ($line in $vars) {
+    if ($line -match '^\s*project_name\s*=\s*"([^"]+)"') {
+      $projectName = $Matches[1]
+    }
+    if ($line -match '^\s*environment\s*=\s*"([^"]+)"') {
+      $environment = $Matches[1]
+    }
+  }
 }
 
-$queueUrl = Get-TerraformOutput -Name "booking_notifications_queue_url"
-if ([string]::IsNullOrWhiteSpace($queueUrl)) {
-  $queueUrl = aws sqs get-queue-url `
-    --queue-name "blacktickets-dev-booking-notifications" `
+$secretNameVal = $SecretName
+if ([string]::IsNullOrWhiteSpace($secretNameVal)) {
+  $secretNameVal = "${projectName}-${environment}/app-config"
+}
+
+$dbHostVal = $DbHost
+if ([string]::IsNullOrWhiteSpace($dbHostVal)) {
+  $dbHostVal = Get-TerraformOutput -Name "rds_endpoint"
+}
+if ([string]::IsNullOrWhiteSpace($dbHostVal)) {
+  $dbHostVal = Read-Host "RDS endpoint hostname"
+}
+
+$queueUrlVal = $QueueUrl
+if ([string]::IsNullOrWhiteSpace($queueUrlVal)) {
+  $queueUrlVal = Get-TerraformOutput -Name "booking_notifications_queue_url"
+}
+if ([string]::IsNullOrWhiteSpace($queueUrlVal)) {
+  $queueName = "${projectName}-${environment}-booking-notifications"
+  $queueUrlVal = aws sqs get-queue-url `
+    --queue-name $queueName `
     --region $Region `
     --query "QueueUrl" `
     --output text 2>$null
 }
 
-if ([string]::IsNullOrWhiteSpace($queueUrl) -or $queueUrl -eq "None") {
-  $queueUrl = ""
+if ([string]::IsNullOrWhiteSpace($queueUrlVal) -or $queueUrlVal -eq "None") {
+  $queueUrlVal = ""
 }
 
 $dbPassword = Get-PlainSecret -EnvName "TF_VAR_db_password" -Prompt "DB password"
@@ -87,9 +118,9 @@ $adminPassword = Get-PlainSecret -EnvName "BLACKTICKETS_ADMIN_PASSWORD" -Prompt 
 $userPassword = Get-PlainSecret -EnvName "BLACKTICKETS_USER_PASSWORD" -Prompt "User password"
 
 $payload = [ordered]@{
-  BOOKING_NOTIFICATION_QUEUE_URL = $queueUrl
+  BOOKING_NOTIFICATION_QUEUE_URL = $queueUrlVal
   DB_PORT                        = $DbPort
-  DB_HOST                        = $dbHost
+  DB_HOST                        = $dbHostVal
   USER_PASSWORD                  = $userPassword
   DB_PASSWORD                    = $dbPassword
   JWT_SECRET                     = $jwtSecret
@@ -104,30 +135,30 @@ $payload = [ordered]@{
 
 $json = $payload | ConvertTo-Json -Compress
 
-Write-Host "Checking Secrets Manager secret: $SecretName"
+Write-Host "Checking Secrets Manager secret: $secretNameVal"
 $previousErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
-aws secretsmanager describe-secret --secret-id $SecretName --region $Region *> $null
+aws secretsmanager describe-secret --secret-id $secretNameVal --region $Region *> $null
 $describeExit = $LASTEXITCODE
 $ErrorActionPreference = $previousErrorActionPreference
 
 if ($describeExit -eq 0) {
   Write-Host "Updating existing secret value."
   aws secretsmanager put-secret-value `
-    --secret-id $SecretName `
+    --secret-id $secretNameVal `
     --secret-string $json `
     --region $Region | Out-Null
 } else {
   Write-Host "Secret was missing. Creating it now."
   aws secretsmanager create-secret `
-    --name $SecretName `
+    --name $secretNameVal `
     --description "Runtime application configuration for BlackTickets." `
     --secret-string $json `
     --region $Region | Out-Null
 }
 
 if ($LASTEXITCODE -ne 0) {
-  throw "Failed to seed Secrets Manager secret $SecretName."
+  throw "Failed to seed Secrets Manager secret $secretNameVal."
 }
 
 Write-Host "Secrets Manager app config seeded successfully."

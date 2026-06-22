@@ -1,11 +1,16 @@
+param(
+  [string]$Region = "us-east-1",
+  [string]$ClusterName = "blacktickets-dev",
+  [string]$AppNamespace = "blacktickets-dev",
+  [string]$TfStateBucket = "blacktickets-dev-tfstate",
+  [string]$TfLockTable = "blacktickets-dev-terraform-locks",
+  [string]$BackendConfig = "dev.hcl",
+  [string]$VarsFile = "dev.tfvars"
+)
+
 $ErrorActionPreference = "Stop"
 
 $InfraRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Region = "us-east-1"
-$ClusterName = "blacktickets-dev"
-$AppNamespace = "blacktickets-dev"
-$TfStateBucket = "blacktickets-dev-tfstate"
-$TfLockTable = "blacktickets-dev-terraform-locks"
 
 Set-Location $InfraRoot
 
@@ -31,9 +36,9 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "Running Terraform init..."
 Push-Location (Join-Path $InfraRoot "terraform")
 try {
-  terraform init -backend-config dev.hcl
+  terraform init -backend-config $BackendConfig
   if ($LASTEXITCODE -ne 0) {
-    throw "Command failed with exit code ${LASTEXITCODE}: terraform init -backend-config dev.hcl"
+    throw "Command failed with exit code ${LASTEXITCODE}: terraform init -backend-config $BackendConfig"
   }
 }
 finally {
@@ -43,9 +48,9 @@ finally {
 Write-Host "Running Terraform plan..."
 Push-Location (Join-Path $InfraRoot "terraform")
 try {
-  terraform plan -var-file dev.tfvars -out tfplan-recover -no-color
+  terraform plan -var-file $VarsFile -out tfplan-recover -no-color
   if ($LASTEXITCODE -ne 0) {
-    throw "Command failed with exit code ${LASTEXITCODE}: terraform plan -var-file dev.tfvars -out tfplan-recover -no-color"
+    throw "Command failed with exit code ${LASTEXITCODE}: terraform plan -var-file $VarsFile -out tfplan-recover -no-color"
   }
 
   terraform show -no-color tfplan-recover > plan-recover.txt

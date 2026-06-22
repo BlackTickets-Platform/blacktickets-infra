@@ -1,4 +1,11 @@
 param(
+  [string]$Region = "us-east-1",
+  [string]$ClusterName = "blacktickets-dev",
+  [string]$Namespace = "blacktickets-dev",
+  [string]$TfStateBucket = "blacktickets-dev-tfstate",
+  [string]$TfLockTable = "blacktickets-dev-terraform-locks",
+  [string]$BackendConfig = "dev.hcl",
+  [string]$VarsFile = "dev.tfvars",
   [switch]$AutoApprove,
   [switch]$SkipBootstrap,
   [switch]$SkipStateRestore,
@@ -11,9 +18,6 @@ $ErrorActionPreference = "Stop"
 
 $InfraRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $TerraformDir = Join-Path $InfraRoot "terraform"
-$Region = "us-east-1"
-$ClusterName = "blacktickets-dev"
-$Namespace = "blacktickets-dev"
 
 function Ensure-DbPassword {
   if (-not [string]::IsNullOrWhiteSpace($env:TF_VAR_db_password)) {
@@ -54,19 +58,15 @@ Invoke-Checked -Label "AWS identity check" -Script {
 }
 
 if (-not $SkipBootstrap) {
-  if ($AutoApprove) {
-    & (Join-Path $InfraRoot "bootstrap.ps1") -AutoApprove
-  } else {
-    & (Join-Path $InfraRoot "bootstrap.ps1")
+  Invoke-Checked -Label "Terraform backend bootstrap" -Script {
+    & (Join-Path $InfraRoot "bootstrap.ps1") -Region $Region -BucketName $TfStateBucket -DynamoDbTable $TfLockTable -AutoApprove:$AutoApprove
   }
 }
 
 if (-not $SkipStateRestore) {
   try {
-    if ($AutoApprove) {
-      & (Join-Path $InfraRoot "restore-state.ps1") -AutoApprove
-    } else {
-      & (Join-Path $InfraRoot "restore-state.ps1")
+    Invoke-Checked -Label "Terraform state restore" -Script {
+      & (Join-Path $InfraRoot "restore-state.ps1") -Region $Region -Bucket $TfStateBucket -LockTable $TfLockTable -AutoApprove:$AutoApprove
     }
   }
   catch {
@@ -79,11 +79,11 @@ if (-not $SkipTerraform) {
   Push-Location $TerraformDir
   try {
     Invoke-Checked -Label "Terraform init" -Script {
-      terraform init -backend-config dev.hcl
+      terraform init -backend-config $BackendConfig
     }
 
     Invoke-Checked -Label "Terraform plan" -Script {
-      terraform plan -var-file dev.tfvars -out tfplan-full-recover -no-color
+      terraform plan -var-file $VarsFile -out tfplan-full-recover -no-color
     }
 
     terraform show -no-color tfplan-full-recover > plan-full-recover.txt
@@ -117,7 +117,9 @@ Invoke-Checked -Label "Update kubeconfig" -Script {
 }
 
 if (-not $SkipSecrets) {
-  & (Join-Path $InfraRoot "seed-secrets.ps1")
+  Invoke-Checked -Label "Seed Secrets Manager" -Script {
+    & (Join-Path $InfraRoot "seed-secrets.ps1") -Region $Region -VarsFile $VarsFile
+  }
 }
 
 Write-Host ""
@@ -131,7 +133,9 @@ foreach ($deployment in @("frontend", "identity-service", "event-service", "book
 }
 
 if (-not $SkipVerify) {
-  & (Join-Path $InfraRoot "verify-dev.ps1")
+  Invoke-Checked -Label "Verify development stack" -Script {
+    & (Join-Path $InfraRoot "verify-dev.ps1") -Region $Region -ClusterName $ClusterName -Namespace $Namespace
+  }
 }
 
 Write-Host ""

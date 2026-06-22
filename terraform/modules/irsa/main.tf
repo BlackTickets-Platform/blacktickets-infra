@@ -122,14 +122,30 @@ data "aws_iam_policy_document" "booking_service" {
 }
 
 data "aws_iam_policy_document" "chatbot_service" {
-  statement {
-    actions = [
-      "bedrock:InvokeModel"
-    ]
+  # Local Bedrock permissions (only if bedrock_assume_role_arn is not provided)
+  dynamic "statement" {
+    for_each = var.bedrock_assume_role_arn == null ? [1] : []
+    content {
+      actions = [
+        "bedrock:InvokeModel"
+      ]
+      resources = [
+        var.bedrock_model_arn
+      ]
+    }
+  }
 
-    resources = [
-      var.bedrock_model_arn
-    ]
+  # Cross-account assume role permissions (only if bedrock_assume_role_arn is provided)
+  dynamic "statement" {
+    for_each = var.bedrock_assume_role_arn != null ? [1] : []
+    content {
+      actions = [
+        "sts:AssumeRole"
+      ]
+      resources = [
+        var.bedrock_assume_role_arn
+      ]
+    }
   }
 }
 

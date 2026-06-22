@@ -47,3 +47,9 @@ variable "bedrock_model_arn" {
   description = "ARN of the Bedrock model the chatbot can invoke."
   type        = string
 }
+
+variable "bedrock_assume_role_arn" {
+  description = "Optional IAM Role ARN in the old AWS account for Bedrock access."
+  type        = string
+  default     = null
+}

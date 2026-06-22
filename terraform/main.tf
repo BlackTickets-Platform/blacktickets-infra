@@ -101,6 +101,7 @@ module "irsa" {
   poster_bucket_arn               = module.data.poster_bucket_arn
   booking_notifications_queue_arn = module.data.booking_notifications_queue_arn
   bedrock_model_arn               = "arn:aws:bedrock:${var.aws_region}::foundation-model/amazon.nova-micro-v1:0"
+  bedrock_assume_role_arn         = var.bedrock_assume_role_arn
 }
 
 module "platform_addons" {

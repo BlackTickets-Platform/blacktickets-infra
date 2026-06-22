@@ -1,4 +1,7 @@
 param(
+  [string]$Region = "us-east-1",
+  [string]$BucketName = "blacktickets-dev-tfstate",
+  [string]$DynamoDbTable = "blacktickets-dev-terraform-locks",
   [switch]$AutoApprove
 )
 
@@ -15,8 +18,8 @@ Write-Host "Bootstrapping Terraform backend resources..."
 Write-Host "Directory: $BootstrapDir"
 Write-Host ""
 Write-Host "This creates or verifies:"
-Write-Host "- S3 bucket: blacktickets-dev-tfstate"
-Write-Host "- DynamoDB table: blacktickets-dev-terraform-locks"
+Write-Host "- S3 bucket: $BucketName"
+Write-Host "- DynamoDB table: $DynamoDbTable"
 Write-Host ""
 
 Push-Location $BootstrapDir
@@ -26,9 +29,9 @@ try {
     throw "Command failed with exit code ${LASTEXITCODE}: terraform init"
   }
 
-  terraform plan -out bootstrap.tfplan -no-color
+  terraform plan -var="region=$Region" -var="bucket_name=$BucketName" -var="dynamodb_table=$DynamoDbTable" -out bootstrap.tfplan -no-color
   if ($LASTEXITCODE -ne 0) {
-    throw "Command failed with exit code ${LASTEXITCODE}: terraform plan -out bootstrap.tfplan -no-color"
+    throw "Command failed with exit code ${LASTEXITCODE}: terraform plan"
   }
 
   if (-not $AutoApprove) {
@@ -49,14 +52,14 @@ finally {
 }
 
 Write-Host "Verifying backend resources..."
-aws s3api head-bucket --bucket blacktickets-dev-tfstate
+aws s3api head-bucket --bucket $BucketName
 if ($LASTEXITCODE -ne 0) {
-  throw "Command failed with exit code ${LASTEXITCODE}: aws s3api head-bucket --bucket blacktickets-dev-tfstate"
+  throw "Command failed with exit code ${LASTEXITCODE}: aws s3api head-bucket --bucket $BucketName"
 }
 
-aws dynamodb describe-table --table-name blacktickets-dev-terraform-locks --region us-east-1 | Out-Null
+aws dynamodb describe-table --table-name $DynamoDbTable --region $Region | Out-Null
 if ($LASTEXITCODE -ne 0) {
-  throw "Command failed with exit code ${LASTEXITCODE}: aws dynamodb describe-table --table-name blacktickets-dev-terraform-locks --region us-east-1"
+  throw "Command failed with exit code ${LASTEXITCODE}: aws dynamodb describe-table --table-name $DynamoDbTable --region $Region"
 }
 
 Write-Host "Bootstrap complete."

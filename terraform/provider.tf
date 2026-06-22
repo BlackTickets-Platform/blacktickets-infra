@@ -1,13 +1,7 @@
 terraform {
   required_version = ">= 1.6.0"
 
-  backend "s3" {
-    bucket         = "blacktickets-dev-tfstate"
-    key            = "blacktickets/dev/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "blacktickets-dev-terraform-locks"
-    encrypt        = true
-  }
+  backend "s3" {}
 
   required_providers {
     archive = {

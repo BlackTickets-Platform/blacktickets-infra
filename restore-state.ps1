@@ -1,4 +1,9 @@
 param(
+  [string]$Region = "us-east-1",
+  [string]$Bucket = "blacktickets-dev-tfstate",
+  [string]$Key = "blacktickets/dev/terraform.tfstate",
+  [string]$LockTable = "blacktickets-dev-terraform-locks",
+  [string]$BackendConfig = "dev.hcl",
   [switch]$AutoApprove
 )
 
@@ -8,10 +13,6 @@ $InfraRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $TerraformDir = Join-Path $InfraRoot "terraform"
 $BackupDir = Join-Path $InfraRoot "state-backups"
 
-$Region = "us-east-1"
-$Bucket = "blacktickets-dev-tfstate"
-$Key = "blacktickets/dev/terraform.tfstate"
-$LockTable = "blacktickets-dev-terraform-locks"
 $DigestLockId = "$Bucket/$Key-md5"
 
 function Set-StateDigest {
@@ -103,9 +104,9 @@ if ($headObjectExitCode -eq 0) {
   Write-Host "Pulling a local backup to $backupPath"
   Push-Location $TerraformDir
   try {
-    terraform init -backend-config dev.hcl
+    terraform init -backend-config $BackendConfig
     if ($LASTEXITCODE -ne 0) {
-      throw "Command failed with exit code ${LASTEXITCODE}: terraform init -backend-config dev.hcl"
+      throw "Command failed with exit code ${LASTEXITCODE}: terraform init -backend-config $BackendConfig"
     }
 
     terraform state pull > $backupPath
@@ -182,9 +183,9 @@ if (-not $versions -or $versions.Count -eq 0) {
   Write-Host "Verifying Terraform can read restored state..."
   Push-Location $TerraformDir
   try {
-    terraform init -backend-config dev.hcl
+    terraform init -backend-config $BackendConfig
     if ($LASTEXITCODE -ne 0) {
-      throw "Command failed with exit code ${LASTEXITCODE}: terraform init -backend-config dev.hcl"
+      throw "Command failed with exit code ${LASTEXITCODE}: terraform init -backend-config $BackendConfig"
     }
 
     terraform state list | Select-Object -First 20
@@ -231,9 +232,9 @@ Write-Host "Local restored copy: $restorePath"
 Write-Host "Verifying Terraform can read restored state..."
 Push-Location $TerraformDir
 try {
-  terraform init -backend-config dev.hcl
+  terraform init -backend-config $BackendConfig
   if ($LASTEXITCODE -ne 0) {
-    throw "Command failed with exit code ${LASTEXITCODE}: terraform init -backend-config dev.hcl"
+    throw "Command failed with exit code ${LASTEXITCODE}: terraform init -backend-config $BackendConfig"
   }
 
   terraform state list | Select-Object -First 20
