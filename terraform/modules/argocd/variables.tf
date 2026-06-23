@@ -109,3 +109,10 @@ variable "applications_destination_namespace" {
   type        = string
   default     = "blacktickets-dev"
 }
+
+variable "bedrock_assume_role_arn" {
+  description = "Optional IAM Role ARN in the old AWS account for Bedrock access."
+  type        = string
+  default     = null
+}
+

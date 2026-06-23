@@ -137,6 +137,7 @@ module "argocd" {
   applications_repo_url          = "https://github.com/BlackTickets-Platform/blacktickets-helm.git"
   applications_path              = "charts/blacktickets"
   applications_values_file       = "values-dev.yaml"
+  bedrock_assume_role_arn        = var.bedrock_assume_role_arn
 
   depends_on = [
     module.eks,
