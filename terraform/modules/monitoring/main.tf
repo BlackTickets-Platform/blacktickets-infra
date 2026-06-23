@@ -66,7 +66,8 @@ locals {
       "      prune: true",
       "      selfHeal: true",
       "    syncOptions:",
-      "      - CreateNamespace=true"
+      "      - CreateNamespace=true",
+      "      - SkipDryRunOnMissingResource=true"
     ) -join "`n"
 
     $manifest | kubectl apply -n argocd -f -
@@ -119,6 +120,7 @@ locals {
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
+          - SkipDryRunOnMissingResource=true
     EOF
     echo "Prometheus ArgoCD Application applied successfully."
   EOT
