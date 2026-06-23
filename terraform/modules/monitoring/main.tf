@@ -210,7 +210,8 @@ resource "kubernetes_storage_class" "ebs_sc" {
 # 5. ArgoCD application deployment for Prometheus Stack
 resource "null_resource" "prometheus_stack" {
   triggers = {
-    cluster_name = var.cluster_name
+    cluster_name   = var.cluster_name
+    prometheus_cmd = sha256(local.prometheus_app_cmd)
   }
 
   provisioner "local-exec" {
