@@ -52,6 +52,11 @@ locals {
       "                    requests:",
       "                      storage: 10Gi",
       "        grafana:",
+      "          sidecar:",
+      "            dashboards:",
+      "              enabled: true",
+      "              label: grafana_dashboard",
+      "              labelValue: `"1`"",
       "          persistence:",
       "            enabled: true",
       "            storageClassName: ebs-sc",
@@ -67,7 +72,8 @@ locals {
       "      selfHeal: true",
       "    syncOptions:",
       "      - CreateNamespace=true",
-      "      - SkipDryRunOnMissingResource=true"
+      "      - SkipDryRunOnMissingResource=true",
+      "      - ServerSideApply=true"
     ) -join "`n"
 
     $manifest | kubectl apply -n argocd -f -
@@ -105,6 +111,11 @@ locals {
                         requests:
                           storage: 10Gi
             grafana:
+              sidecar:
+                dashboards:
+                  enabled: true
+                  label: grafana_dashboard
+                  labelValue: "1"
               persistence:
                 enabled: true
                 storageClassName: ebs-sc
@@ -121,6 +132,7 @@ locals {
         syncOptions:
           - CreateNamespace=true
           - SkipDryRunOnMissingResource=true
+          - ServerSideApply=true
     EOF
     echo "Prometheus ArgoCD Application applied successfully."
   EOT
@@ -223,4 +235,47 @@ resource "null_resource" "prometheus_stack" {
     kubernetes_namespace.monitoring,
     kubernetes_storage_class.ebs_sc
   ]
+}
+
+# 6. ConfigMaps for Grafana Custom Dashboards
+resource "kubernetes_config_map" "application_dashboard" {
+  metadata {
+    name      = "blacktickets-application-dashboard"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    labels = {
+      grafana_dashboard = "1"
+    }
+  }
+
+  data = {
+    "application-dashboard.json" = file("${path.module}/files/application-dashboard.json")
+  }
+}
+
+resource "kubernetes_config_map" "business_dashboard" {
+  metadata {
+    name      = "blacktickets-business-dashboard"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    labels = {
+      grafana_dashboard = "1"
+    }
+  }
+
+  data = {
+    "business-dashboard.json" = file("${path.module}/files/business-dashboard.json")
+  }
+}
+
+resource "kubernetes_config_map" "infrastructure_dashboard" {
+  metadata {
+    name      = "blacktickets-infrastructure-dashboard"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    labels = {
+      grafana_dashboard = "1"
+    }
+  }
+
+  data = {
+    "infrastructure-dashboard.json" = file("${path.module}/files/infrastructure-dashboard.json")
+  }
 }
