@@ -175,3 +175,19 @@ module "observability" {
   poster_cloudfront_distribution_id = module.edge.poster_cloudfront_distribution_id
   poster_bucket_arn                 = module.data.poster_bucket_arn
 }
+
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  project_name      = var.project_name
+  environment       = var.environment
+  cluster_name      = module.eks.cluster_name
+  aws_region        = var.aws_region
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
+
+  depends_on = [
+    module.eks,
+    module.argocd
+  ]
+}
