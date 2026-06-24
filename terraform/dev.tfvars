@@ -34,4 +34,5 @@ create_route53_zone   = true
 create_route53_record = true
 
 bedrock_assume_role_arn    = null
-app_load_balancer_dns_name = "k8s-blacktic-blacktic-3ca4ae07e3-958477236.us-east-1.elb.amazonaws.com"
+app_load_balancer_dns_name = "k8s-blacktic-blacktic-88ae2159c8-5471596.us-east-1.elb.amazonaws.com"
+
