@@ -173,3 +173,12 @@ resource "null_resource" "wait_for_aws_load_balancer_webhook" {
     command     = local.wait_for_lbc_webhook_cmd
   }
 }
+
+resource "helm_release" "metrics_server" {
+  name       = "metrics-server"
+  namespace  = "kube-system"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  version    = "3.12.1"
+  wait       = true
+}

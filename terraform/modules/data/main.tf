@@ -32,16 +32,13 @@ resource "aws_db_instance" "postgres" {
   publicly_accessible    = false
   db_subnet_group_name   = aws_db_subnet_group.main.name
   vpc_security_group_ids = [var.rds_security_group_id]
-  skip_final_snapshot    = false
-  deletion_protection    = true
+  skip_final_snapshot    = true
+  deletion_protection    = false
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-postgres"
   })
 
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_s3_bucket" "posters" {

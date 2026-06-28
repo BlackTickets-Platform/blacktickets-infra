@@ -81,9 +81,6 @@ resource "aws_iam_openid_connect_provider" "cluster" {
     Name = "${local.name_prefix}-oidc-provider"
   })
 
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 data "aws_iam_policy_document" "node_assume_role" {
