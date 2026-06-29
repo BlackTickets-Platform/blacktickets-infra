@@ -34,5 +34,5 @@ create_route53_zone   = true
 create_route53_record = true
 
 bedrock_assume_role_arn    = "arn:aws:iam::091869721157:role/BlackticketsBedrockCrossAccountRole"
-app_load_balancer_dns_name = "k8s-blacktic-blacktic-88ae2159c8-5471596.us-east-1.elb.amazonaws.com"
+app_load_balancer_dns_name = "k8s-blacktic-blacktic-793dccc343-406029559.us-east-1.elb.amazonaws.com"
 

@@ -116,3 +116,9 @@ variable "bedrock_assume_role_arn" {
   default     = null
 }
 
+variable "waf_web_acl_arn" {
+  description = "ARN of the regional WAF Web ACL to associate with the Load Balancer."
+  type        = string
+  default     = ""
+}
+

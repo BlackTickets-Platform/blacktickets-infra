@@ -117,3 +117,8 @@ output "app_config_secret_name" {
   description = "Name of the Secrets Manager app config secret."
   value       = module.data.app_config_secret_name
 }
+
+output "booking_notifications_queue_url" {
+  description = "URL of the booking notifications SQS queue."
+  value       = module.data.booking_notifications_queue_url
+}

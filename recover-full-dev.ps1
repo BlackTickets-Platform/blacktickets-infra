@@ -132,6 +132,39 @@ foreach ($deployment in @("frontend", "identity-service", "event-service", "book
   kubectl rollout status "deployment/$deployment" -n $Namespace --timeout=240s
 }
 
+# ── Auto-detect new ALB and update Route 53 CNAME ──
+Write-Host ""
+Write-Host "==> Sync Route 53 CNAME to active ALB"
+$maxWait = 120
+$waited  = 0
+$albDns  = $null
+while ($waited -lt $maxWait) {
+  $albDns = kubectl get gateway blacktickets -n $Namespace -o jsonpath='{.status.addresses[0].value}' 2>$null
+  if (-not [string]::IsNullOrWhiteSpace($albDns)) { break }
+  Write-Host "Waiting for Gateway address... ($waited/$maxWait s)"
+  Start-Sleep -Seconds 10
+  $waited += 10
+}
+if ([string]::IsNullOrWhiteSpace($albDns)) {
+  Write-Warning "Could not detect Gateway ALB address. Skipping Route 53 sync."
+} else {
+  Write-Host "Detected ALB: $albDns"
+  # Update dev.tfvars with the current ALB so Route 53 is in sync
+  $tfvarsPath = Join-Path $TerraformDir $VarsFile
+  $tfvarsContent = Get-Content $tfvarsPath -Raw
+  $tfvarsContent = $tfvarsContent -replace 'app_load_balancer_dns_name\s*=\s*"[^"]*"', "app_load_balancer_dns_name = `"$albDns`""
+  Set-Content $tfvarsPath $tfvarsContent -NoNewline
+  Write-Host "Updated $VarsFile with new ALB DNS."
+  # Apply only the Route 53 record — fast and safe
+  Push-Location $TerraformDir
+  try {
+    terraform apply -var-file $VarsFile -target='module.edge.aws_route53_record.app[0]' -auto-approve
+  } finally {
+    Pop-Location
+  }
+  Write-Host "Route 53 CNAME updated."
+}
+
 if (-not $SkipVerify) {
   Invoke-Checked -Label "Verify development stack" -Script {
     & (Join-Path $InfraRoot "verify-dev.ps1") -Region $Region -ClusterName $ClusterName -Namespace $Namespace

@@ -135,9 +135,11 @@ module "argocd" {
   eks_cluster_ca_cert            = module.eks.cluster_certificate_authority_data
   eks_cluster_token              = data.aws_eks_cluster_auth.main.token
   applications_repo_url          = "https://github.com/BlackTickets-Platform/blacktickets-helm.git"
+  applications_target_revision   = "dev"
   applications_path              = "charts/blacktickets"
   applications_values_file       = "values-dev.yaml"
   bedrock_assume_role_arn        = var.bedrock_assume_role_arn
+  waf_web_acl_arn                = module.edge.waf_web_acl_arn
 
   depends_on = [
     module.eks,

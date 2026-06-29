@@ -102,6 +102,8 @@ locals {
       "          value: `"${var.app_domain_name}`"",
       "        - name: gateway.certificateArn",
       "          value: `"${var.acm_certificate_arn != null ? var.acm_certificate_arn : ""}`"",
+      "        - name: gateway.wafv2Arn",
+      "          value: `"${var.waf_web_acl_arn != null ? var.waf_web_acl_arn : ""}`"",
       "        - name: bedrock.roleArn",
       "          value: `"${var.bedrock_assume_role_arn != null ? var.bedrock_assume_role_arn : ""}`"",
       "  destination:",
@@ -171,6 +173,8 @@ locals {
               value: "${var.app_domain_name}"
             - name: gateway.certificateArn
               value: "${var.acm_certificate_arn != null ? var.acm_certificate_arn : ""}"
+            - name: gateway.wafv2Arn
+              value: "${var.waf_web_acl_arn != null ? var.waf_web_acl_arn : ""}"
             - name: bedrock.roleArn
               value: "${var.bedrock_assume_role_arn != null ? var.bedrock_assume_role_arn : ""}"
       destination:
@@ -212,6 +216,7 @@ resource "null_resource" "argocd_application" {
       app_domain_name                = var.app_domain_name
       acm_certificate_arn            = var.acm_certificate_arn
       bedrock_assume_role_arn        = var.bedrock_assume_role_arn
+      waf_web_acl_arn                = var.waf_web_acl_arn
     }))
   }
 
