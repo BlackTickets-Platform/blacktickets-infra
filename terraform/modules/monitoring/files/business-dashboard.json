@@ -85,7 +85,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(http_requests_total{route=\"/bookings\", method=\"POST\", status_code=\"201\"}) or vector(0)",
+          "expr": "sum(http_requests_total{service=\"booking-service\", route=\"/\", method=\"POST\", status_code=\"201\"}) or vector(0)",
           "legendFormat": "Total Bookings",
           "range": true,
           "refId": "A"
@@ -154,7 +154,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "(sum(http_requests_total{route=\"/bookings\", method=\"POST\", status_code=\"201\"}) / sum(http_requests_total{route=\"/bookings\", method=\"POST\"}) * 100) or vector(100)",
+          "expr": "(sum(http_requests_total{service=\"booking-service\", route=\"/\", method=\"POST\", status_code=\"201\"}) / sum(http_requests_total{service=\"booking-service\", route=\"/\", method=\"POST\"}) * 100) or vector(100)",
           "legendFormat": "Success Rate",
           "range": true,
           "refId": "A"
@@ -215,7 +215,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(http_requests_total{route=\"/chatbot\", method=\"POST\"}) or vector(0)",
+          "expr": "sum(http_requests_total{service=\"chatbot-service\", route=\"/chatbot/chat\", method=\"POST\"}) or vector(0)",
           "legendFormat": "Chatbot Queries",
           "range": true,
           "refId": "A"
@@ -276,7 +276,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(http_requests_total{route=\"/events\", method=\"GET\"}) or vector(0)",
+          "expr": "sum(http_requests_total{service=\"event-service\", route=\"/\", method=\"GET\"}) or vector(0)",
           "legendFormat": "Event Queries",
           "range": true,
           "refId": "A"
@@ -377,7 +377,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_requests_total{route=\"/bookings\", method=\"POST\"}[5m])) or vector(0)",
+          "expr": "sum(rate(http_requests_total{service=\"booking-service\", route=\"/\", method=\"POST\"}[5m])) or vector(0)",
           "legendFormat": "Ticket Purchase Attempts",
           "range": true,
           "refId": "A"
@@ -388,7 +388,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_requests_total{route=\"/chatbot\", method=\"POST\"}[5m])) or vector(0)",
+          "expr": "sum(rate(http_requests_total{service=\"chatbot-service\", route=\"/chatbot/chat\", method=\"POST\"}[5m])) or vector(0)",
           "legendFormat": "Chatbot Queries",
           "range": true,
           "refId": "B"
@@ -399,7 +399,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(http_requests_total{route=~\"/auth/.*\"}[5m])) or vector(0)",
+          "expr": "sum(rate(http_requests_total{service=\"identity-service\", route=~\"/login|/register|/me\"}[5m])) or vector(0)",
           "legendFormat": "Identity Operations",
           "range": true,
           "refId": "C"
