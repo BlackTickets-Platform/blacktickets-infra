@@ -57,6 +57,8 @@ resource "aws_cloudfront_distribution" "posters" {
     cloudfront_default_certificate = true
   }
 
+  web_acl_id = aws_wafv2_web_acl.cloudfront.arn
+
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-poster-cdn"
   })
@@ -179,6 +181,48 @@ resource "aws_wafv2_web_acl" "regional" {
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-web-acl"
+  })
+}
+
+resource "aws_wafv2_web_acl" "cloudfront" {
+  name        = "${local.name_prefix}-cloudfront-web-acl"
+  description = "Global WAF Web ACL for BlackTickets CloudFront posters CDN."
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWSManagedRulesCommonRuleSet"
+    priority = 1
+
+    override_action {
+      none {}
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "AWSManagedRulesCommonRuleSet"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${local.name_prefix}-cloudfront-web-acl"
+    sampled_requests_enabled   = true
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-cloudfront-web-acl"
   })
 }
 
