@@ -152,7 +152,7 @@ resource "aws_wafv2_web_acl" "regional" {
   }
 
   rule {
-    name     = "RateLimit100"
+    name     = "RateLimit2000"
     priority = 3
 
     action {
@@ -161,14 +161,14 @@ resource "aws_wafv2_web_acl" "regional" {
 
     statement {
       rate_based_statement {
-        limit              = 100
+        limit              = 2000
         aggregate_key_type = "IP"
       }
     }
 
     visibility_config {
       cloudwatch_metrics_enabled = true
-      metric_name                = "RateLimit100"
+      metric_name                = "RateLimit2000"
       sampled_requests_enabled   = true
     }
   }
