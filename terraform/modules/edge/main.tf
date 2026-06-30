@@ -248,6 +248,10 @@ resource "aws_acm_certificate" "app" {
 
   domain_name       = var.app_domain_name
   validation_method = "DNS"
+  subject_alternative_names = [
+    "argocd.${var.domain_name}",
+    "grafana.${var.domain_name}"
+  ]
 
   tags = merge(local.common_tags, {
     Name = var.app_domain_name
@@ -280,6 +284,26 @@ resource "aws_route53_record" "app" {
 
   zone_id = local.route53_zone_id
   name    = var.app_domain_name
+  type    = "CNAME"
+  ttl     = 60
+  records = [var.app_load_balancer_dns_name]
+}
+
+resource "aws_route53_record" "argocd" {
+  count = var.app_domain_name != null && var.app_load_balancer_dns_name != null ? 1 : 0
+
+  zone_id = local.route53_zone_id
+  name    = "argocd.${var.domain_name}"
+  type    = "CNAME"
+  ttl     = 60
+  records = [var.app_load_balancer_dns_name]
+}
+
+resource "aws_route53_record" "grafana" {
+  count = var.app_domain_name != null && var.app_load_balancer_dns_name != null ? 1 : 0
+
+  zone_id = local.route53_zone_id
+  name    = "grafana.${var.domain_name}"
   type    = "CNAME"
   ttl     = 60
   records = [var.app_load_balancer_dns_name]
